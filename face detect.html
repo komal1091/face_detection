@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Face Detection</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
+</head>
+<body>
+    <center>
+    <h1>Face Detection</h1>
+</center>
+</br>
+    <center>
+    <form id="imageUploadForm" enctype="multipart/form-data">
+        <input type="file" id="imageInput" accept="image/*"></form></br>
+    </center>
+    <center>
+        <button type="button" onclick="detectFaces()">Detect Faces</button>
+    </form>
+</center>
+    <div id="imageContainer">
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <script>
+        async function detectFaces() {
+            const imageInput = document.getElementById('imageInput');
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            const imageFile = imageInput.files[0];
+            if (!imageFile) {
+                alert('Please select an image file.');
+                return;
+            }
+
+            const image = await faceapi.bufferToImage(imageFile);
+            canvas.width = image.width;
+            canvas.height = image.height;
+            ctx.drawImage(image, 0, 0);
+
+            const model = await faceLandmarksDetection.load(
+                faceLandmarksDetection.SupportedPackages.mediapipeFacemesh
+            );
+            const predictions = await model.estimateFaces({
+                input: image,
+            });
+
+            if (predictions.length === 0) {
+                alert('No faces detected.');
+                return;
+            }
+
+            predictions.forEach(prediction => {
+                const keypoints = prediction.scaledMesh;
+                for (let i = 0; i < keypoints.length; i++) {
+                    const [x, y] = keypoints[i];
+                    ctx.beginPath();
+                    ctx.arc(x, y, 1 /* radius */, 0, 2 * Math.PI);
+                    ctx.fillStyle = 'red';
+                    ctx.fill();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
